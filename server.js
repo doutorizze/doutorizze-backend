@@ -14,6 +14,9 @@ const webhooksRoutes = require('./routes/webhooks');
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+// Configurar trust proxy para Render
+app.set('trust proxy', 1);
+
 // Middleware de segurança
 app.use(helmet());
 app.use(cors({
@@ -21,11 +24,17 @@ app.use(cors({
   credentials: true
 }));
 
-// Rate limiting
+// Rate limiting com configuração para proxy
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutos
   max: 100, // máximo 100 requests por IP
-  message: 'Muitas tentativas, tente novamente em 15 minutos'
+  message: 'Muitas tentativas, tente novamente em 15 minutos',
+  standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
+  legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+  validate: {
+    xForwardedForHeader: false, // Disable validation for X-Forwarded-For header
+    trustProxy: false // Disable trust proxy validation
+  }
 });
 app.use('/api/', limiter);
 
